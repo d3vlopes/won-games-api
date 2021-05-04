@@ -28,7 +28,7 @@ module.exports = {
     }
 
     const total = games.reduce((acc, game) => {
-      return acc + game.price;
+      return Number((acc + game.price * 100).toFixed(0));
     }, 0);
 
     if (total === 0) {
@@ -39,7 +39,7 @@ module.exports = {
 
     try {
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: total * 100,
+        amount: total,
         currency: "usd",
         metadata: { integration_check: "accept_a_payment" },
       });
