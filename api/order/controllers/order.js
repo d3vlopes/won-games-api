@@ -6,19 +6,10 @@ module.exports = {
   createPaymentIntent: async (ctx) => {
     const { cart } = ctx.request.body;
 
-    let games = [];
+    const cartGamesIds = await strapi.config.function.cart.cartGamesIds(cart)
 
-    await Promise.all(
-      cart?.map(async (game) => {
-        const validatedGame = await strapi.services.game.findOne({
-          id: game.id,
-        });
-
-        if (validatedGame) {
-          games.push(validatedGame);
-        }
-      })
-    );
+    // get all games
+    const games = await strapi.config.functions.cart.cartItems(cartGamesIds);
 
     if (!games.length) {
       ctx.response.status = 404;
@@ -27,9 +18,7 @@ module.exports = {
       };
     }
 
-    const total = games.reduce((acc, game) => {
-      return Number((acc + game.price * 100).toFixed(0));
-    }, 0);
+    const total = await strapi.config.functions.cart.total(games)
 
     if (total === 0) {
       return {
@@ -41,7 +30,7 @@ module.exports = {
       const paymentIntent = await stripe.paymentIntents.create({
         amount: total,
         currency: "usd",
-        metadata: { integration_check: "accept_a_payment" },
+        metadata: { cart: JSON.stringify(cartGamesIds) },
       });
 
       return paymentIntent;
