@@ -7,7 +7,8 @@ module.exports = {
   createPaymentIntent: async (ctx) => {
     const { cart } = ctx.request.body;
 
-    const cartGamesIds = await strapi.config.function.cart.cartGamesIds(cart)
+    // simplify cart data
+    const cartGamesIds = await strapi.config.functions.cart.cartGamesIds(cart);
 
     // get all games
     const games = await strapi.config.functions.cart.cartItems(cartGamesIds);
@@ -19,7 +20,7 @@ module.exports = {
       };
     }
 
-    const total = await strapi.config.functions.cart.total(games)
+    const total = await strapi.config.functions.cart.total(games);
 
     if (total === 0) {
       return {
@@ -29,7 +30,7 @@ module.exports = {
 
     try {
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: total,
+        amount: total * 100,
         currency: "usd",
         metadata: { cart: JSON.stringify(cartGamesIds) },
       });
@@ -41,6 +42,7 @@ module.exports = {
       };
     }
   },
+
   create: async (ctx) => {
     // pegar as informações do frontend
     const { cart, paymentIntentId, paymentMethod } = ctx.request.body;
@@ -70,7 +72,6 @@ module.exports = {
     // precisa pegar do frontend os valores do paymentMethod
     // e recuperar por aqui
 
-
     // salvar no banco
     const entry = {
       total_in_cents,
@@ -82,6 +83,8 @@ module.exports = {
     };
 
     const entity = await strapi.services.order.create(entry);
+
+    // enviar um email da compra para o usuário
 
     // retornando que foi salvo no banco
     return sanitizeEntity(entity, { model: strapi.models.order });
