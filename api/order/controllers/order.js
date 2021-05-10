@@ -93,6 +93,11 @@ module.exports = {
 
     const entity = await strapi.services.order.create(entry);
 
+    const formatPrice = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      }).format(total_in_cents / 100)
+
     // enviar um email da compra para o usuário
     await strapi.plugins["email-designer"].services.email.sendTemplatedEmail(
       {
@@ -105,7 +110,7 @@ module.exports = {
       {
         user: userInfo,
         payment: {
-          total: `$ ${total_in_cents / 100}`,
+          total: `${formatPrice}`,
           card_brand: entry.card_brand,
           card_last4: entry.card_last4,
         },
