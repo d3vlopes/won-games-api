@@ -2,13 +2,13 @@
 
 const stripe = require("stripe")(process.env.STRIPE_KEY);
 const { sanitizeEntity } = require("strapi-utils");
-const orderTemplate = require('../../../config/email-templates/order')
 
 module.exports = {
   createPaymentIntent: async (ctx) => {
     const { cart } = ctx.request.body;
 
-    const cartGamesIds = await strapi.config.functions.cart.cartGamesIds(cart)
+    // simplify cart data
+    const cartGamesIds = await strapi.config.functions.cart.cartGamesIds(cart);
 
     // get all games
     const games = await strapi.config.functions.cart.cartItems(cartGamesIds);
@@ -20,7 +20,7 @@ module.exports = {
       };
     }
 
-    const total = await strapi.config.functions.cart.total(games)
+    const total = await strapi.config.functions.cart.total(games);
 
     if (total === 0) {
       return {
@@ -42,6 +42,7 @@ module.exports = {
       };
     }
   },
+
   create: async (ctx) => {
     // pegar as informações do frontend
     const { cart, paymentIntentId, paymentMethod } = ctx.request.body;
@@ -71,16 +72,16 @@ module.exports = {
     // precisa pegar do frontend os valores do paymentMethod
     // e recuperar por aqui
     let paymentInfo;
-
     if (total_in_cents !== 0) {
       try {
-        paymentInfo = await stripe.paymentMethods.retrieve(paymentMethod)
-      } catch (error) {
+        paymentInfo = await stripe.paymentMethods.retrieve(paymentMethod);
+      } catch (err) {
         ctx.response.status = 402;
-        return { error: error.message }
+        return { error: err.message };
       }
     }
 
+    // salvar no banco
     const entry = {
       total_in_cents,
       payment_intent_id: paymentIntentId,
@@ -90,25 +91,21 @@ module.exports = {
       games,
     };
 
-    // salvar no banco
     const entity = await strapi.services.order.create(entry);
 
-    const formatPrice = new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      }).format(total_in_cents / 100)
-
     // enviar um email da compra para o usuário
-    await strapi.plugins.email.services.email.sendTemplatedEmail(
+    await strapi.plugins["email-designer"].services.email.sendTemplatedEmail(
       {
         to: userInfo.email,
         from: "no-reply@wongames.com",
       },
-      orderTemplate,
+      {
+        templateId: 1,
+      },
       {
         user: userInfo,
         payment: {
-          total: `${formatPrice}`,
+          total: `$ ${total_in_cents / 100}`,
           card_brand: entry.card_brand,
           card_last4: entry.card_last4,
         },
