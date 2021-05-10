@@ -108,7 +108,7 @@ module.exports = {
       {
         user: userInfo,
         payment: {
-          total: `${formatPrice}`,
+          total: `${total_in_cents / 100}`,
           card_brand: entry.card_brand,
           card_last4: entry.card_last4,
         },
