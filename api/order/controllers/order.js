@@ -2,6 +2,7 @@
 
 const stripe = require("stripe")(process.env.STRIPE_KEY);
 const { sanitizeEntity } = require("strapi-utils");
+const orderTemplate = require('../../../config/email-templates/order')
 
 module.exports = {
   createPaymentIntent: async (ctx) => {
@@ -80,8 +81,6 @@ module.exports = {
       }
     }
 
-
-    // salvar no banco
     const entry = {
       total_in_cents,
       payment_intent_id: paymentIntentId,
@@ -91,7 +90,31 @@ module.exports = {
       games,
     };
 
+    // salvar no banco
     const entity = await strapi.services.order.create(entry);
+
+    const formatPrice = new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      }).format(total_in_cents / 100)
+
+    // enviar um email da compra para o usuário
+    await strapi.plugins.email.services.email.sendTemplatedEmail(
+      {
+        to: userInfo.email,
+        from: "no-reply@wongames.com",
+      },
+      orderTemplate,
+      {
+        user: userInfo,
+        payment: {
+          total: `${formatPrice}`,
+          card_brand: entry.card_brand,
+          card_last4: entry.card_last4,
+        },
+        games,
+      }
+    );
 
     // retornando que foi salvo no banco
     return sanitizeEntity(entity, { model: strapi.models.order });
