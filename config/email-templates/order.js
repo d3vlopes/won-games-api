@@ -1,32 +1,35 @@
-const subject = "Order at Won Games";
+const subject = "Compra na Won Games";
 
 const text = `
-  Hi <%= user.username %>, thanks for buying at Won Games!
-  Follow the info of your order:
-  Card Information:
-  Card brand: <%= payment.card_brand %>
-  Card number: **** **** **** <%= payment.card_last4 %>
+  Olá <%= user.username %>, obrigado por comprar na Won Games!
+  Segue as informações do seu pedido:
+  Informações do cartão:
+  Bandeira do cartão: <%= payment.card_brand %>
+  Número do cartão: **** **** **** <%= payment.card_last4 %>
   Total: <%= payment.total %>
-  Games:
+  Jogos:
   <% _.forEach(games, function(game) { %>
-    <%= game.name %> - Price: $<%= game.price %>
+    <%= game.name %> - Preço: <%= game.price %>
   <% }); %>
 `;
 
 const html = `
-  <p>Hi <%= user.username %>, thanks for buying at Won Games!</p>
-  <p>Follow the info of your order:</p>
-  <h3>Card Information</h3>
+  <p>Olá <%= user.username %>, obrigado por comprar na Won Games!</p>
+  <p>Segue as informações do seu pedido:</p>
+  <h3>Informações do cartão</h3>
   <ul>
-    <li><strong>Card brand:</strong> <%= payment.card_brand %></li>
-    <li><strong>Card number:</strong> **** **** **** <%= payment.card_last4 %></li>
+    <li><strong>Bandeira do cartão:</strong> <%= payment.card_brand %></li>
+    <li><strong>Número do cartão:</strong> **** **** **** <%= payment.card_last4 %></li>
   </ul>
   <h3>Total: <%= payment.total %></h3>
   <hr />
-  <h3>Games</h3>
+  <h3>Jogos</h3>
   <ul>
     <% _.forEach(games, function(game) { %>
-			<li><a href="http://localhost:3000/game/<%= game.slug %>"><%= game.name %></a> - Price: <strong>$<%= Number(game.price).toFixed(2) %></strong></li>
+			<li><a href="http://localhost:3000/game/<%= game.slug %>"><%= game.name %></a> - Preço: <strong><%= new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        }).format(game.price) %></strong></li>
 		<% }); %>
   </ul>
 `;
